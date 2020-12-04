@@ -7,11 +7,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -140,7 +139,7 @@ public class TxtFilesAnalizer {
 				"disease2/"
 				};
 		
-		int numberOfFiles = 0;
+		int numberOfFiles = 0; //Count and show how many files were processe in total
 		
 		for (String URL : URLs) {
 			File directoryPath = new File("D:\\Machine Learning/" + URL);
@@ -153,18 +152,19 @@ public class TxtFilesAnalizer {
 				System.out.println("File-Name: " + file.getName());
 				fileName = file.getName();
 				personID = file.getName().substring(0, 5);
-				sex = determineSexOfPerson(file);
-				yearOfTest = determineYearOfTest(file);
+				sex = getSexOfPerson(file);
+				yearOfTest = getYearOfTest(file);
 				proceedFile("D:\\Machine Learning/" + URL + file.getName(), "D:\\Machine Learning/Java_Transformed/" + URL + file.getName());
 				numberOfFiles++;
 				sex = "Not available";
 //				break;
 			}
+//			break;
 		}
 		System.out.println("Number of processed Files = " + numberOfFiles);
 	}
 
-	public static int determineYearOfTest(File file) {
+	public static int getYearOfTest(File file) {
 		int year = 2000;
 		while (year <= currentDate) {
 			if (file.getName().contains(year + "-")) return year;
@@ -173,7 +173,7 @@ public class TxtFilesAnalizer {
 		return 0;
 	}
 
-	public static String determineSexOfPerson(File file) {
+	public static String getSexOfPerson(File file) {
 		String fileName = file.getName().toLowerCase();
 		return (fileName.contains("female") ||
 				fileName.contains("fee") ||
@@ -242,7 +242,7 @@ public class TxtFilesAnalizer {
 						valuesOfE.add(line + "_" + numberRight);
 						numberRight++;
 						/*
-						 * We do calculations at the moment the new line with mark "Right" or "Left" appears. 
+						 * We do Calculations at the moment the new line with mark "Right" or "Left" appears. 
 						 * Calculations are carried out for a part of data entered before. 
 						 * Thus the range of the data to be statistically processed starts with the index of 
 						 * the next line that will appear after the line with "Right" or "Left" marks 
@@ -267,10 +267,6 @@ public class TxtFilesAnalizer {
 					}
 					if (line.contains("Left")) {
 						head = "Left";
-//						if (numberLeft == 2) {
-//							bugs.put("Bugs_Left_1", bugsCountLeft);
-//						}
-//						bugsCountLeft = 0;
 						if (numberRight == 3) {
 							bugs.put("Bugs_Right_2", bugsCountRight);	
 							bugsCountRight = 0;
@@ -314,6 +310,8 @@ public class TxtFilesAnalizer {
 					end = 0;
 					countE = 0;
 					countS++;
+					int n = (line.startsWith("  S")) ? 3 : 2;
+					
 					if (countS > 0) {
 						/* At this point Checking if "Start" not follows the "Start" instead of "Start-End-..." sequence - If Yes, then 
 						 * this is a bug and such data should be excluded from the analysis, thus we remove the last 
@@ -325,14 +323,9 @@ public class TxtFilesAnalizer {
 							if (head.equals("Right")) bugsCountRight++;
 							else bugsCountLeft++;							
 						}
-						String[] s = line.split(" ");
-						if (line.startsWith("  S")) {
-							start = Integer.parseInt(s[3].trim());
-						valuesOfS.add(s[3].trim());
-						}
-						else {start = Integer.parseInt(s[2].trim());
-						valuesOfS.add(s[2].trim());
-						}
+						String s = line.split(" ")[n].trim();
+						start = Integer.parseInt(s);
+						valuesOfS.add(s);
 					}
 					if ((head.equals("Left") && valuesOfS.size() - 1 == indexOfValueOfSInArrayToCalculateMedianLeft) ||
 							(head.equals("Right") && valuesOfS.size() - 1 == indexOfValueOfSInArrayToCalculateMedianRight)) 
@@ -343,15 +336,12 @@ public class TxtFilesAnalizer {
 				if (line.startsWith(" E") || line.startsWith("  E")) {
 					countS = 0;
 					countE++;
+					int n = (line.startsWith("  E")) ? 3 : 2;
+					
 					if (countE == 1 && start != 0) {
-						String[] e = line.split(" ");
-						if (line.startsWith("  E")) {
-							end = Integer.parseInt(e[3].trim());
-						valuesOfE.add(e[3].trim());}
-						else {
-							end = Integer.parseInt(e[2].trim());
-						valuesOfE.add(e[2].trim());
-						}
+						String e = line.split(" ")[n].trim();
+						end = Integer.parseInt(e);
+						valuesOfE.add(e);
 					}
 					if ((head.equals("Left") && valuesOfE.size() - 1 == indexOfValueOfSInArrayToCalculateMedianLeft) ||
 							(head.equals("Right") && valuesOfE.size() - 1 == indexOfValueOfSInArrayToCalculateMedianRight)) 
@@ -552,146 +542,81 @@ public class TxtFilesAnalizer {
 
 	/* MIN */
 	private static int min(List<Integer> source, int start, int end) {
-		if (start == end) return source.get(start);
-		List<Integer> partOfSource = new ArrayList<Integer>();
-		for (int i = start; i < end; i++) {
-			partOfSource.add(source.get(i));
-		}
-		return Collections.min(partOfSource);
-		
+		return (start == end) ? source.get(start) : Collections.min(source.subList(start, end));	
 	}
 
 	/* MAX */
 	private static int max(List<Integer> source, int start, int end) {
-		if (start == end) return source.get(start);
-		List<Integer> partOfSource = new ArrayList<Integer>();
-		for (int i = start; i < end; i++) {
-			partOfSource.add(source.get(i));
-		}
-		return Collections.max(partOfSource);
+		return (start == end) ? source.get(start) : Collections.max(source.subList(start, end));
 	}
 	
 	/* MEAN */
 	private static int mean(List<Integer> source, int start, int end) {
 		if (start == end) return source.get(start);
-		List<Integer> partOfSource = new ArrayList<Integer>();
-		for (int i = start; i < end; i++) {
-			partOfSource.add(source.get(i));
-		}
-		int sum = 0;
-		for (Integer i : partOfSource) {
-			sum += i;
-		}
-		return sum / partOfSource.size();
+		int sum = source.subList(start, end).stream().mapToInt(e -> e).sum();
+		int n = source.subList(start, end).size();
+		return sum / n;
 	}
 	
-	/* Q1-Q4 MEAN values*/
+	/* Q1-Q4 MEAN values */
 	private static int quartileMean(List<Integer> source, int start, int end, int quartileNumber) {
 		if (start == end) return source.get(start);
-		List<Integer> partOfSource = new ArrayList<Integer>();
-		for (int i = start; i < end; i++) {
-			partOfSource.add(source.get(i));
-		}
 		
-		int [] quartilesMeans = new int [4];
-		
-		List<List<Integer>> quartiles = new ArrayList<>();
-		quartiles.add(new ArrayList<>());
-		quartiles.add(new ArrayList<>());
-		quartiles.add(new ArrayList<>());
-		quartiles.add(new ArrayList<>());
-		List <Integer> tempQ = new ArrayList<>();
+		List<Integer> partOfSource = source.subList(start, end);
+		int [] quartilesMeans = {0, 0, 0, 0};
+		List<List<Integer>> quartiles = Arrays.asList(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
 		
 		if (partOfSource.size() < 5) {
 			switch (partOfSource.size()) {
-			case 0 : quartilesMeans[0] = 0;
-						quartilesMeans[1] = 0;
-						quartilesMeans[2] = 0;
-						quartilesMeans[3] = 0;
+			case 0 : 	System.out.println("Case0"); break;
+			case 1 : 	quartilesMeans[1] = partOfSource.get(0);
 						break;
-			case 1 : quartilesMeans[0] = 0;
-						quartilesMeans[1] = partOfSource.get(0);
-						quartilesMeans[2] = 0;
-						quartilesMeans[3] = 0;
-						break;
-			case 2 : quartilesMeans[0] = 0;
-						quartilesMeans[1] = partOfSource.get(0);
+			case 2 : 	quartilesMeans[1] = partOfSource.get(0);
 						quartilesMeans[2] = partOfSource.get(1);
-						quartilesMeans[3] = 0;
 						break;
-			case 3 : quartilesMeans[0] = partOfSource.get(0);
+			case 3 :	quartilesMeans[0] = partOfSource.get(0);
 						quartilesMeans[1] = partOfSource.get(1);
 						quartilesMeans[2] = partOfSource.get(2);
-						quartilesMeans[3] = 0;
 						break;
-			case 4 : quartilesMeans[0] = partOfSource.get(0);
-						quartilesMeans[1] = partOfSource.get(1);
-						quartilesMeans[2] = partOfSource.get(2);
-						quartilesMeans[3] = partOfSource.get(3);
+			case 4 : 	quartilesMeans = partOfSource.stream().mapToInt(e -> e).toArray();
 						break;
 			}
 			return quartilesMeans[quartileNumber - 1];
 		}
 		
 		else {
-			if (partOfSource.size() % 4 == 0) { //Lengths of subArrays are equal
-				int sizeOfQuartile = partOfSource.size() / 4;
-				int i = 0;
-				int num = 1;
-				for (int val : partOfSource) {
-					tempQ.add(val);
-					if (i == sizeOfQuartile - 1) {
-						quartiles.get(num-1).addAll(tempQ);
-						tempQ.clear();
-						num++;
-						i = -1;
-					}
-					i++;
+			if (partOfSource.size() % 4 == 0) { // If subArray divided into 4 equal parts (quartiles)
+				int index = 0;
+				for (List <Integer> quartile : quartiles) {
+					quartile.addAll(partOfSource.subList(index, index + partOfSource.size() / 4));
+					index += partOfSource.size() / 4;
 				}
 			}
 			
-			else if (partOfSource.size() % 4 != 0) { //Lengths of subArrays are NOT equal
-				int sizeQ1 = 0;
-				int sizeQ2 = 0;
-				int sizeQ3 = 0;
-				int sizeQ4 = 0;
-				
-				if (partOfSource.size() % 2 != 0) { //SubArrays' lengths are odd
-					int semiSize1 = partOfSource.size() / 2 + 1;
-					int semiSize2 = partOfSource.size() / 2;		
-					sizeQ1 = (semiSize1 % 2 != 0) ? semiSize1 / 2 + 1 : semiSize1 / 2;
-					sizeQ2 = semiSize1 / 2;
-					sizeQ3 = (semiSize2 % 2 != 0) ? semiSize2 / 2 + 1 : semiSize2 / 2;
-					sizeQ4 = semiSize2 / 2;
+			else { // If subArray is NOT divided into 4 equal parts
+				/* Step 1. Divide subArray into two semiArrays (subList1 and subList2). In case the subArray is not even 
+				 * (not divided by 2) the first semiArray (subList1) should be larger by one then the second semiArray (subList2).
+				 */
+				int oneMore = (partOfSource.size() % 2 != 0) ? 1 : 0; 
+				List<Integer> subList1 = new ArrayList<>();
+				for (int i = 0; i < partOfSource.size() / 2 + oneMore; i++) {
+					subList1.add(partOfSource.get(i));
 				}
-				else { //SubArrays' lengths are even
-					int size1 = partOfSource.size() / 2;	
-					sizeQ1 = sizeQ3 = size1 / 2 + 1;
-					sizeQ2 = sizeQ4 = size1 / 2;
+				List<Integer> subList2 = new ArrayList<>();
+				for (int i = partOfSource.size() / 2 + oneMore; i < partOfSource.size(); i++) {
+					subList2.add(partOfSource.get(i));
 				}
 				
-				int count = 1;
-				int i = 0;
-				int n = sizeQ1;
-					
-				for (int val : partOfSource) {
-					tempQ.add(val);
-					i++;
-					if (i == n) {
-						quartiles.get(count-1).addAll(tempQ);
-						count++;
-						if (count == 2) {
-							n = sizeQ2;
-						}
-						else if (count == 3) {
-							n = sizeQ3;
-						}
-						else n = sizeQ4;
-						tempQ.clear();
-						i = 0;
-					}
-				}
-					
+				/* Step 2. Divide each of the semiArarys (subList1 and subList2) into two quartiles. In case the semiArrays are 
+				 * not even (not divided by 2) the first of quartiles should be bigger by one then the second one. 
+				 */
+				oneMore = (subList1.size() % 2 != 0) ? 1 : 0;
+				quartiles.get(0).addAll(subList1.subList(0, subList1.size() / 2 + oneMore));
+				quartiles.get(1).addAll(subList1.subList(subList1.size() / 2 + oneMore, subList1.size()));
+				
+				oneMore = (subList2.size() % 2 != 0) ? 1 : 0;
+				quartiles.get(2).addAll(subList2.subList(0, subList2.size() / 2 + oneMore));
+				quartiles.get(3).addAll(subList2.subList(subList2.size() / 2 + oneMore, subList2.size()));
 			}
 		}
 		
@@ -701,39 +626,30 @@ public class TxtFilesAnalizer {
 	/* SD */
 	private static double sd(List<Integer> source, int start, int end) {
 		if (start == end) return 0;
-		int mean = mean(source, start, end);
-		List<Integer> partOfSource = new ArrayList<Integer>();
-		for (int i = start; i < end; i++) {
-			partOfSource.add(source.get(i));
-		}
-		int sumOfSqrs = 0;
-		for (Integer i : partOfSource) {
-			sumOfSqrs += (i - mean) * (i - mean);
-		}
-		if (partOfSource.size() > 30) return Math.sqrt(sumOfSqrs/(partOfSource.size() - 1));
-		return Math.sqrt(sumOfSqrs/partOfSource.size());
+		
+		int mean = mean(source, start, end);	
+		int sumOfSqrs = source.subList(start, end).stream().mapToInt(i -> (i - mean) * (i - mean)).sum();
+		int n = source.subList(start, end).size();
+		
+		return (n > 30) ? Math.sqrt(sumOfSqrs/(n - 1)) : Math.sqrt(sumOfSqrs/n);
 	}
 	
-	/* Coefficient of Variation in %*/
+	/* COEFICIENT of VARIATION in %*/
 	private static double variation(List<Integer> source, int start, int end) {
-		if (start == end) return 0;
-		int mean = mean(source, start, end);
-		double sd = sd(source, start, end);
-		return sd / mean * 100;
+		return (start == end) ? 0 : (sd(source, start, end) / mean(source, start, end) * 100); 
 	}
 	
 	/* MEDIAN */
 	private static int median(List<Integer> source, int start, int end) {
 		if (start == end) return source.get(start);
-		List<Integer> partOfSource = new ArrayList<Integer>();
-		for (int i = start; i < end; i++) {
-			partOfSource.add(source.get(i));
-		}
-		Collections.sort(partOfSource);
+		List<Integer> partOfSource = source.subList(start, end); // The partOfSource is already sorted since the subList() function sorted it
+		int indexOfMedian = partOfSource.size()/2;
 		
-		if (partOfSource.size() % 2 == 0)
-		    return (source.get(partOfSource.size()/2) + source.get(partOfSource.size()/2-1)) / 2;
-		return source.get(partOfSource.size()/2);
+		return (partOfSource.size() % 2 == 0) ?
+				(partOfSource.get(indexOfMedian) + partOfSource.get(indexOfMedian-1)) / 2 : // If partOfSource is odd
+				partOfSource.get(indexOfMedian) 											// If partOfSource is even
+				;
 	}
+
 
 }
