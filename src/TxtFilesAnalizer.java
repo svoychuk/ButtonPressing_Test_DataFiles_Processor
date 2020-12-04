@@ -533,24 +533,29 @@ public class TxtFilesAnalizer {
 		target.put("Q4_Mean", quartileMean(source, start, source.size()-1, 4));
 	}
 
-/*Formulas of statistical variables */
+/*FORMULAS of statistical variables */
 	
+	/* This function is used to change the decimal separating dots into commas in the double values */
 	private static String comma(Number number) {
 		String temp = "" + new BigDecimal((double)number).setScale(2, RoundingMode.HALF_UP).doubleValue();
 		return temp.replace(".", ",");
 	}
 
-	/* MIN */
+	/* MIN 
+	 * is a minimum value in an array*/
 	private static int min(List<Integer> source, int start, int end) {
 		return (start == end) ? source.get(start) : Collections.min(source.subList(start, end));	
 	}
 
-	/* MAX */
+	/* MAX 
+	 * is a maximum value in an array*/
 	private static int max(List<Integer> source, int start, int end) {
 		return (start == end) ? source.get(start) : Collections.max(source.subList(start, end));
 	}
 	
-	/* MEAN */
+	/* MEAN 
+	 * is a ratio of a (1) SUM of all components in the array by their (2) N, that is the amount of components in the 
+	 * array, that is equal to array length or size. */
 	private static int mean(List<Integer> source, int start, int end) {
 		if (start == end) return source.get(start);
 		int sum = source.subList(start, end).stream().mapToInt(e -> e).sum();
@@ -558,7 +563,8 @@ public class TxtFilesAnalizer {
 		return sum / n;
 	}
 	
-	/* Q1-Q4 MEAN values */
+	/* MEANs by QUARTILES (Q1-Q4_MEAN values) 
+	 * is a MEAN value calculated for a first (Q1), second (Q2), third (Q3) or fourth (Q4) quarters (QUARTILE) of components in an array.*/
 	private static int quartileMean(List<Integer> source, int start, int end, int quartileNumber) {
 		if (start == end) return source.get(start);
 		
@@ -568,7 +574,7 @@ public class TxtFilesAnalizer {
 		
 		if (partOfSource.size() < 5) {
 			switch (partOfSource.size()) {
-			case 0 : 	System.out.println("Case0"); break;
+			case 0 : 	break;
 			case 1 : 	quartilesMeans[1] = partOfSource.get(0);
 						break;
 			case 2 : 	quartilesMeans[1] = partOfSource.get(0);
@@ -623,7 +629,11 @@ public class TxtFilesAnalizer {
 		return mean(quartiles.get(quartileNumber-1), 0, quartiles.get(quartileNumber-1).size());
 	}
 
-	/* SD */
+	/* SD is a ratio of the (1) SUM_of_SQUARES of the differences of each variable in the array minus the (2) MEAN value 
+	 * divided by the (3) N (is a number of variables in the array, that is the array length). IMPORTANT!!! If N > 30 it should be 
+	 * decreased by 1 before division, that is SUM_of_SQUARES / (N - 1). 
+	 * 
+	 * */
 	private static double sd(List<Integer> source, int start, int end) {
 		if (start == end) return 0;
 		
@@ -634,12 +644,12 @@ public class TxtFilesAnalizer {
 		return (n > 30) ? Math.sqrt(sumOfSqrs/(n - 1)) : Math.sqrt(sumOfSqrs/n);
 	}
 	
-	/* COEFICIENT of VARIATION in %*/
+	/* COEFICIENT of VARIATION, in % is a ratio of (1) SD to (2) MEAN multiplied by 100*/
 	private static double variation(List<Integer> source, int start, int end) {
 		return (start == end) ? 0 : (sd(source, start, end) / mean(source, start, end) * 100); 
 	}
 	
-	/* MEDIAN */
+	/* MEDIAN is a (1) middle of the SORTED array */
 	private static int median(List<Integer> source, int start, int end) {
 		if (start == end) return source.get(start);
 		List<Integer> partOfSource = source.subList(start, end); // The partOfSource is already sorted since the subList() function sorted it
